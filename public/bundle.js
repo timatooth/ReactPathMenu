@@ -54,13 +54,13 @@
 
 	var _reactDom2 = _interopRequireDefault(_reactDom);
 
-	var _APP = __webpack_require__(159);
+	var _ReactPathMenu = __webpack_require__(159);
 
-	var _APP2 = _interopRequireDefault(_APP);
+	var _ReactPathMenu2 = _interopRequireDefault(_ReactPathMenu);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	_reactDom2.default.render(_react2.default.createElement(_APP2.default, null), document.getElementById('container'));
+	_reactDom2.default.render(_react2.default.createElement(_ReactPathMenu2.default, null), document.getElementById('container'));
 
 	// Component
 
@@ -9321,6 +9321,7 @@
 	 */
 	var EventInterface = {
 	  type: null,
+	  target: null,
 	  // currentTarget is set when dispatching; no use in copying it here
 	  currentTarget: emptyFunction.thatReturnsNull,
 	  eventPhase: null,
@@ -9354,8 +9355,6 @@
 	  this.dispatchConfig = dispatchConfig;
 	  this.dispatchMarker = dispatchMarker;
 	  this.nativeEvent = nativeEvent;
-	  this.target = nativeEventTarget;
-	  this.currentTarget = nativeEventTarget;
 
 	  var Interface = this.constructor.Interface;
 	  for (var propName in Interface) {
@@ -9366,7 +9365,11 @@
 	    if (normalize) {
 	      this[propName] = normalize(nativeEvent);
 	    } else {
-	      this[propName] = nativeEvent[propName];
+	      if (propName === 'target') {
+	        this.target = nativeEventTarget;
+	      } else {
+	        this[propName] = nativeEvent[propName];
+	      }
 	    }
 	  }
 
@@ -13215,7 +13218,10 @@
 	      }
 	    });
 
-	    nativeProps.children = content;
+	    if (content) {
+	      nativeProps.children = content;
+	    }
+
 	    return nativeProps;
 	  }
 
@@ -18688,7 +18694,7 @@
 
 	'use strict';
 
-	module.exports = '0.14.6';
+	module.exports = '0.14.7';
 
 /***/ },
 /* 147 */
@@ -19691,18 +19697,14 @@
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	// Components
-
-	//Constants
-
 	// Diameter of the main button in pixels
-	var MAIN_BUTTON_DIAM = 90;
+	var MAIN_BUTTON_DIAM = 48;
 	var CHILD_BUTTON_DIAM = 48;
 	// The number of child buttons that fly out from the main button
-	var NUM_CHILDREN = 5;
+	var NUM_CHILDREN = 4;
 	// Hard code the position values of the mainButton
-	var M_X = 490;
-	var M_Y = 450;
+	var M_X = 250;
+	var M_Y = 250;
 
 	//should be between 0 and 0.5 (its maximum value is difference between scale in finalChildButtonStyles a
 	// nd initialChildButtonStyles)
@@ -19716,11 +19718,11 @@
 	    //degrees
 	FAN_ANGLE = (NUM_CHILDREN - 1) * SEPARATION_ANGLE,
 	    //degrees
-	BASE_ANGLE = (180 - FAN_ANGLE) / 2; // degrees
+	BASE_ANGLE = (-45 - FAN_ANGLE) / 2; // degrees
 
 	// Names of icons for each button retreived from fontAwesome, we'll add a little extra just in case
 	// the NUM_CHILDREN is changed to a bigger value
-	var childButtonIcons = ['pencil', 'at', 'camera', 'bell', 'comment', 'bolt', 'ban', 'code'];
+	var childButtonIcons = ['pencil', 'paint-brush', 'eraser', 'arrows', 'eyedropper', 'bolt', 'ban', 'code'];
 
 	// Utility functions
 
@@ -19736,17 +19738,18 @@
 		};
 	}
 
-	var APP = function (_React$Component) {
-		_inherits(APP, _React$Component);
+	var ReactPathMenu = function (_React$Component) {
+		_inherits(ReactPathMenu, _React$Component);
 
-		function APP(props) {
-			_classCallCheck(this, APP);
+		function ReactPathMenu(props) {
+			_classCallCheck(this, ReactPathMenu);
 
-			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(APP).call(this, props));
+			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ReactPathMenu).call(this, props));
 
 			_this.state = {
 				isOpen: false,
-				childButtons: []
+				childButtons: [],
+				activeIcon: 'pencil'
 			};
 
 			// Bind this to the functions
@@ -19755,12 +19758,11 @@
 			return _this;
 		}
 
-		_createClass(APP, [{
+		_createClass(ReactPathMenu, [{
 			key: 'componentDidMount',
 			value: function componentDidMount() {
 				window.addEventListener('click', this.closeMenu);
 				var childButtons = [];
-
 				this.setState({ childButtons: childButtons.slice(0) });
 			}
 		}, {
@@ -19831,57 +19833,6 @@
 				var scaleMin = this.initialChildButtonStyles().scale.val;
 				var scaleMax = this.finalChildButtonStyles(0).scale.val;
 
-				//This function returns target styles for each child button in current animation frame
-				//according to actual styles in previous animation frame.
-				//Each button could have one of two target styles
-				// - defined in initialChildButtonStyles (for collapsed buttons)
-				// - defined in finalChildButtonStyles (for expanded buttons)
-				// To decide which target style should be applied function uses css 'scale' property
-				// for previous button in previous animation frame.
-				// When 'scale' for previous button passes some 'border' which is a simple combination one of
-				// two 'scale' values and some OFFSET the target style for next button should be changed.
-				//
-				// For example let's set the OFFSET for 0.3 - it this case border's value for closed buttons will be 0.8.
-				//
-				// All buttons are closed
-				//                INITIAL-BUTTON-SCALE-(0.5)-----------BORDER-(0.8)------FINAL-BUTTON-SCALE-(1)
-				//                |------------------------------------------|--------------------------------|
-				// BUTTON NO 1    o------------------------------------------|---------------------------------
-				// BUTTON NO 2    o------------------------------------------|---------------------------------
-				//
-				// When user clicks on menu button no 1 changes its target style according to finalChildButtonStyles method
-				// and starts growing up. In this frame this button doesn't pass the border so target style for button no 2
-				// stays as it was in previous animation frame
-				// BUTTON NO 1    -----------------------------------o-------|---------------------------------
-				// BUTTON NO 2    o------------------------------------------|---------------------------------
-				//
-				//
-				//
-				// (...few frames later)
-				// In previous frame button no 1 passes the border so target style for button no 2 could be changed.
-				// BUTTON NO 1    -------------------------------------------|-o-------------------------------
-				// BUTTON NO 2    -----o-------------------------------------|---------------------------------
-				//
-				//
-				// All buttons are expanded - in this case border value is 0.7 (OFFSET = 0.3)
-				//                INITIAL-BUTTON-SCALE-(0.5)---BORDER-(0.7)--------------FINAL-BUTTON-SCALE-(1)
-				//                |------------------------------|--------------------------------------------|
-				// BUTTON NO 1    -------------------------------|--------------------------------------------O
-				// BUTTON NO 2    -------------------------------|--------------------------------------------O
-				//
-				// When user clicks on menu button no 1 changes its target style according to initialChildButtonStyles method
-				// and starts shrinking down. In this frame this button doesn't pass the border so target style for button no 2
-				// stays as it was defined in finalChildButtonStyles method
-				// BUTTON NO 1    -------------------------------|------------------------------------O--------
-				// BUTTON NO 2    -------------------------------|--------------------------------------------O
-				//
-				//
-				//
-				// (...few frames later)
-				// In previous frame button no 1 passes the border so target style for button no 2 could be changed
-				// and this button starts to animate to its default state.
-				// BUTTON NO 1    -----------------------------o-|---------------------------------------------
-				// BUTTON NO 2    -------------------------------|------------------------------------O--------
 				var calculateStylesForNextFrame = function calculateStylesForNextFrame(prevFrameStyles) {
 					prevFrameStyles = isOpen ? prevFrameStyles : prevFrameStyles.reverse();
 
@@ -19927,6 +19878,9 @@
 									{
 										className: 'child-button',
 										key: index,
+										onClick: function onClick(i) {
+											return _this2.setState({ activeIcon: childButtonIcons[index] });
+										},
 										style: {
 											left: left,
 											height: height,
@@ -19963,9 +19917,9 @@
 								'div',
 								{
 									className: 'main-button',
-									style: _extends({}, _this3.mainButtonStyles(), { transform: 'rotate(' + rotate + 'deg)' }),
+									style: _extends({}, _this3.mainButtonStyles()),
 									onClick: _this3.toggleMenu },
-								_react2.default.createElement('i', { className: 'fa fa-close fa-3x' })
+								_react2.default.createElement('i', { className: "fa fa-" + _this3.state.activeIcon + " fa-2x" })
 							);
 						}
 					)
@@ -19973,12 +19927,12 @@
 			}
 		}]);
 
-		return APP;
+		return ReactPathMenu;
 	}(_react2.default.Component);
 
 	;
 
-	module.exports = APP;
+	module.exports = ReactPathMenu;
 
 /***/ },
 /* 160 */
@@ -20858,17 +20812,17 @@
 /* 167 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var now = __webpack_require__(166)
-	  , global = typeof window === 'undefined' ? {} : window
+	/* WEBPACK VAR INJECTION */(function(global) {var now = __webpack_require__(166)
+	  , root = typeof window === 'undefined' ? global : window
 	  , vendors = ['moz', 'webkit']
 	  , suffix = 'AnimationFrame'
-	  , raf = global['request' + suffix]
-	  , caf = global['cancel' + suffix] || global['cancelRequest' + suffix]
+	  , raf = root['request' + suffix]
+	  , caf = root['cancel' + suffix] || root['cancelRequest' + suffix]
 
-	for(var i = 0; i < vendors.length && !raf; i++) {
-	  raf = global[vendors[i] + 'Request' + suffix]
-	  caf = global[vendors[i] + 'Cancel' + suffix]
-	      || global[vendors[i] + 'CancelRequest' + suffix]
+	for(var i = 0; !raf && i < vendors.length; i++) {
+	  raf = root[vendors[i] + 'Request' + suffix]
+	  caf = root[vendors[i] + 'Cancel' + suffix]
+	      || root[vendors[i] + 'CancelRequest' + suffix]
 	}
 
 	// Some versions of FF have rAF but not cAF
@@ -20921,12 +20875,17 @@
 	  // Wrap in a new function to prevent
 	  // `cancel` potentially being assigned
 	  // to the native rAF function
-	  return raf.call(global, fn)
+	  return raf.call(root, fn)
 	}
 	module.exports.cancel = function() {
-	  caf.apply(global, arguments)
+	  caf.apply(root, arguments)
+	}
+	module.exports.polyfill = function() {
+	  root.requestAnimationFrame = raf
+	  root.cancelAnimationFrame = caf
 	}
 
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
 /* 168 */
@@ -21225,8 +21184,8 @@
 /* 176 */
 /***/ function(module, exports) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {/**
-	 * lodash 3.1.0 (Custom Build) <https://lodash.com/>
+	/**
+	 * lodash 3.1.3 (Custom Build) <https://lodash.com/>
 	 * Build: `lodash modularize exports="npm" -o ./`
 	 * Copyright 2012-2016 The Dojo Foundation <http://dojofoundation.org/>
 	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
@@ -21257,7 +21216,7 @@
 	/** Used to detect unsigned integer values. */
 	var reIsUint = /^(?:0|[1-9]\d*)$/;
 
-	/** Built-in method references without a dependency on `global`. */
+	/** Built-in method references without a dependency on `root`. */
 	var freeParseInt = parseInt;
 
 	/**
@@ -21275,7 +21234,7 @@
 	}
 
 	/** Used for built-in method references. */
-	var objectProto = global.Object.prototype;
+	var objectProto = Object.prototype;
 
 	/**
 	 * Used to resolve the [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
@@ -21362,7 +21321,7 @@
 	var getLength = baseProperty('length');
 
 	/**
-	 * Checks if the provided arguments are from an iteratee call.
+	 * Checks if the given arguments are from an iteratee call.
 	 *
 	 * @private
 	 * @param {*} value The potential iteratee value argument.
@@ -21424,7 +21383,6 @@
 	 *
 	 * @static
 	 * @memberOf _
-	 * @type Function
 	 * @category Lang
 	 * @param {*} value The value to check.
 	 * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
@@ -21443,8 +21401,7 @@
 	 * // => false
 	 */
 	function isArrayLike(value) {
-	  return value != null &&
-	    !(typeof value == 'function' && isFunction(value)) && isLength(getLength(value));
+	  return value != null && isLength(getLength(value)) && !isFunction(value);
 	}
 
 	/**
@@ -21465,8 +21422,8 @@
 	 */
 	function isFunction(value) {
 	  // The use of `Object#toString` avoids issues with the `typeof` operator
-	  // in Safari 8 which returns 'object' for typed array constructors, and
-	  // PhantomJS 1.9 which returns 'function' for `NodeList` instances.
+	  // in Safari 8 which returns 'object' for typed array and weak map constructors,
+	  // and PhantomJS 1.9 which returns 'function' for `NodeList` instances.
 	  var tag = isObject(value) ? objectToString.call(value) : '';
 	  return tag == funcTag || tag == genTag;
 	}
@@ -21496,7 +21453,8 @@
 	 * // => false
 	 */
 	function isLength(value) {
-	  return typeof value == 'number' && value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+	  return typeof value == 'number' &&
+	    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
 	}
 
 	/**
@@ -21523,8 +21481,6 @@
 	 * // => false
 	 */
 	function isObject(value) {
-	  // Avoid a V8 JIT bug in Chrome 19-20.
-	  // See https://code.google.com/p/v8/issues/detail?id=2291 for more details.
 	  var type = typeof value;
 	  return !!value && (type == 'object' || type == 'function');
 	}
@@ -21570,8 +21526,7 @@
 	 * Creates an array of numbers (positive and/or negative) progressing from
 	 * `start` up to, but not including, `end`. A step of `-1` is used if a negative
 	 * `start` is specified without an `end` or `step`. If `end` is not specified
-	 * it's set to `start` with `start` then set to `0`.  If `end` is less than
-	 * `start` a zero-length range is created unless a negative `step` is specified.
+	 * it's set to `start` with `start` then set to `0`.
 	 *
 	 * **Note:** JavaScript follows the IEEE-754 standard for resolving
 	 * floating-point values which can produce unexpected results.
@@ -21610,7 +21565,6 @@
 
 	module.exports = range;
 
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ }
 /******/ ]);

@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 // Component
-import APP from './Components/APP';
+import ReactPathMenu from './Components/ReactPathMenu';
 
 
-ReactDOM.render(<APP/>, document.getElementById('container'));
+ReactDOM.render(<ReactPathMenu />, document.getElementById('container'));

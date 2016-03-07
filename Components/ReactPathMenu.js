@@ -4,18 +4,14 @@ import ReactDOM from 'react-dom';
 import {Motion, StaggeredMotion, spring} from 'react-motion';
 import range from 'lodash.range';
 
-// Components 
-
-//Constants 
-
 // Diameter of the main button in pixels
-const MAIN_BUTTON_DIAM = 90;
+const MAIN_BUTTON_DIAM = 48;
 const CHILD_BUTTON_DIAM = 48;
 // The number of child buttons that fly out from the main button
-const NUM_CHILDREN = 5;
+const NUM_CHILDREN = 4;
 // Hard code the position values of the mainButton
-const M_X = 490;
-const M_Y = 450;
+const M_X = 250;
+const M_Y = 250;
 
 //should be between 0 and 0.5 (its maximum value is difference between scale in finalChildButtonStyles a
 // nd initialChildButtonStyles)
@@ -27,11 +23,11 @@ const SPRING_CONFIG = [400, 28];
 const FLY_OUT_RADIUS = 130,
 	SEPARATION_ANGLE = 40, //degrees
 	FAN_ANGLE = (NUM_CHILDREN - 1) * SEPARATION_ANGLE, //degrees
-	BASE_ANGLE = ((180 - FAN_ANGLE)/2); // degrees
+	BASE_ANGLE = ((-45 - FAN_ANGLE)/2); // degrees
 
-// Names of icons for each button retreived from fontAwesome, we'll add a little extra just in case 
+// Names of icons for each button retreived from fontAwesome, we'll add a little extra just in case
 // the NUM_CHILDREN is changed to a bigger value
-let childButtonIcons = ['pencil', 'at', 'camera', 'bell', 'comment', 'bolt', 'ban', 'code'];
+let childButtonIcons = ['pencil', 'paint-brush', 'eraser', 'arrows', 'eyedropper', 'bolt', 'ban', 'code'];
 
 
 // Utility functions
@@ -49,13 +45,14 @@ function finalChildDeltaPositions(index) {
 }
 
 
-class APP extends React.Component {
+class ReactPathMenu extends React.Component {
 	constructor(props) {
 		super(props);
 
 		this.state = {
 			isOpen: false,
-			childButtons: []
+			childButtons: [],
+			activeIcon: 'pencil'
 		};
 
 		// Bind this to the functions
@@ -66,7 +63,6 @@ class APP extends React.Component {
 	componentDidMount() {
 		window.addEventListener('click', this.closeMenu);
 		let childButtons = [];
-
 		this.setState({childButtons: childButtons.slice(0)});
 	}
 
@@ -123,57 +119,6 @@ class APP extends React.Component {
 		const scaleMin = this.initialChildButtonStyles().scale.val;
 		const scaleMax = this.finalChildButtonStyles(0).scale.val;
 
-		//This function returns target styles for each child button in current animation frame
-		//according to actual styles in previous animation frame.
-		//Each button could have one of two target styles
-		// - defined in initialChildButtonStyles (for collapsed buttons)
-		// - defined in finalChildButtonStyles (for expanded buttons)
-		// To decide which target style should be applied function uses css 'scale' property
-		// for previous button in previous animation frame.
-		// When 'scale' for previous button passes some 'border' which is a simple combination one of
-		// two 'scale' values and some OFFSET the target style for next button should be changed.
-		//
-		// For example let's set the OFFSET for 0.3 - it this case border's value for closed buttons will be 0.8.
-		//
-		// All buttons are closed
-		//                INITIAL-BUTTON-SCALE-(0.5)-----------BORDER-(0.8)------FINAL-BUTTON-SCALE-(1)
-		//                |------------------------------------------|--------------------------------|
-		// BUTTON NO 1    o------------------------------------------|---------------------------------
-		// BUTTON NO 2    o------------------------------------------|---------------------------------
-		//
-		// When user clicks on menu button no 1 changes its target style according to finalChildButtonStyles method
-		// and starts growing up. In this frame this button doesn't pass the border so target style for button no 2
-		// stays as it was in previous animation frame
-		// BUTTON NO 1    -----------------------------------o-------|---------------------------------
-		// BUTTON NO 2    o------------------------------------------|---------------------------------
-		//
-		//
-		//
-		// (...few frames later)
-		// In previous frame button no 1 passes the border so target style for button no 2 could be changed.
-		// BUTTON NO 1    -------------------------------------------|-o-------------------------------
-		// BUTTON NO 2    -----o-------------------------------------|---------------------------------
-		//
-		//
-		// All buttons are expanded - in this case border value is 0.7 (OFFSET = 0.3)
-		//                INITIAL-BUTTON-SCALE-(0.5)---BORDER-(0.7)--------------FINAL-BUTTON-SCALE-(1)
-		//                |------------------------------|--------------------------------------------|
-		// BUTTON NO 1    -------------------------------|--------------------------------------------O
-		// BUTTON NO 2    -------------------------------|--------------------------------------------O
-		//
-		// When user clicks on menu button no 1 changes its target style according to initialChildButtonStyles method
-		// and starts shrinking down. In this frame this button doesn't pass the border so target style for button no 2
-		// stays as it was defined in finalChildButtonStyles method
-		// BUTTON NO 1    -------------------------------|------------------------------------O--------
-		// BUTTON NO 2    -------------------------------|--------------------------------------------O
-		//
-		//
-		//
-		// (...few frames later)
-		// In previous frame button no 1 passes the border so target style for button no 2 could be changed
-		// and this button starts to animate to its default state.
-		// BUTTON NO 1    -----------------------------o-|---------------------------------------------
-		// BUTTON NO 2    -------------------------------|------------------------------------O--------
 		let calculateStylesForNextFrame = prevFrameStyles => {
 			prevFrameStyles = isOpen ? prevFrameStyles : prevFrameStyles.reverse();
 
@@ -208,6 +153,7 @@ class APP extends React.Component {
 							<div
 								className="child-button"
 								key={index}
+								onClick={(i) => this.setState({activeIcon: childButtonIcons[index]})}
 								style={{
 									left,
 									height,
@@ -235,10 +181,9 @@ class APP extends React.Component {
 					{({rotate}) =>
 						<div
 							className="main-button"
-							style={{...this.mainButtonStyles(), transform: `rotate(${rotate}deg)`}}
+							style={{...this.mainButtonStyles()}}
 							onClick={this.toggleMenu}>
-							{/*Using fa-close instead of fa-plus because fa-plus doesn't center properly*/}
-							<i className="fa fa-close fa-3x"/>
+							<i className={"fa fa-" + this.state.activeIcon + " fa-2x"} />
 						</div>
 					}
 				</Motion>
@@ -247,4 +192,4 @@ class APP extends React.Component {
 	}
 };
 
-module.exports = APP;
+module.exports = ReactPathMenu;

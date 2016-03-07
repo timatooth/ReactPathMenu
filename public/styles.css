@@ -1,12 +1,3 @@
-html, body {
-	background-color: #dddddd;
-}
-
-#container {
-	width: 100vw;
-	height: 100vh;
-}
-
 .main-button {
 	position: absolute;
 	width: 90px;
@@ -34,4 +25,3 @@ html, body {
 	box-shadow: rgba(0, 0, 0, 0.2) 0px 1px 3px;
 	color: #8898A5;
 }
-
