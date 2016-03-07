@@ -19703,27 +19703,39 @@
 	// The number of child buttons that fly out from the main button
 	var NUM_CHILDREN = 4;
 	// Hard code the position values of the mainButton
-	var M_X = 250;
-	var M_Y = 250;
+	var M_X = 30;
+	var M_Y = 30;
 
 	//should be between 0 and 0.5 (its maximum value is difference between scale in finalChildButtonStyles a
 	// nd initialChildButtonStyles)
 	var OFFSET = 0.4;
 
-	var SPRING_CONFIG = [400, 28];
+	var SPRING_CONFIG = [450, 28];
 
 	// How far away from the main button does the child buttons go
 	var FLY_OUT_RADIUS = 130,
-	    SEPARATION_ANGLE = 40,
+	    SEPARATION_ANGLE = 30,
 	    //degrees
 	FAN_ANGLE = (NUM_CHILDREN - 1) * SEPARATION_ANGLE,
 	    //degrees
-	BASE_ANGLE = (-45 - FAN_ANGLE) / 2; // degrees
+	BASE_ANGLE = (-90 - FAN_ANGLE) / 2; // degrees
 
 	// Names of icons for each button retreived from fontAwesome, we'll add a little extra just in case
 	// the NUM_CHILDREN is changed to a bigger value
 	var childButtonIcons = ['pencil', 'paint-brush', 'eraser', 'arrows', 'eyedropper', 'bolt', 'ban', 'code'];
 
+	var childButtonsCss = {
+		position: 'absolute',
+		display: 'flex',
+		justifyContent: 'center',
+		alignItems: 'center',
+		width: '50px',
+		height: '50px',
+		borderRadius: '100%',
+		backgroundColor: 'white',
+		boxShadow: 'rgba(0, 0, 0, 0.2) 0px 1px 3px',
+		color: '#8898A5'
+	};
 	// Utility functions
 
 	function toRadians(degrees) {
@@ -19768,12 +19780,27 @@
 		}, {
 			key: 'mainButtonStyles',
 			value: function mainButtonStyles() {
-				return {
+				var mainButtonCss = {
+					position: 'absolute',
+					width: '90px',
+					height: '90px',
+					borderRadius: '100%',
+					backgroundColor: '#68AEF0',
+					cursor: 'pointer',
+					display: 'flex',
+					justifyContent: 'center',
+					alignItems: 'center',
+					color: '#ffffff',
+					fontWeight: 'lighter',
+					border: '1px solid rgba(0, 0, 0, 0.1)'
+				};
+
+				return Object.assign({}, mainButtonCss, {
 					width: MAIN_BUTTON_DIAM,
 					height: MAIN_BUTTON_DIAM,
 					top: M_Y - MAIN_BUTTON_DIAM / 2,
 					left: M_X - MAIN_BUTTON_DIAM / 2
-				};
+				});
 			}
 		}, {
 			key: 'initialChildButtonStyles',
@@ -19881,13 +19908,13 @@
 										onClick: function onClick(i) {
 											return _this2.setState({ activeIcon: childButtonIcons[index] });
 										},
-										style: {
+										style: Object.assign({}, childButtonsCss, {
 											left: left,
 											height: height,
 											top: top,
 											transform: 'rotate(' + rotate + 'deg) scale(' + scale + ')',
 											width: width
-										}
+										})
 									},
 									_react2.default.createElement('i', { className: "fa fa-" + childButtonIcons[index] + " fa-lg" })
 								);
